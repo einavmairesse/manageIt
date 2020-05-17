@@ -19,14 +19,14 @@ def addAllergies(allergies, kid):
             newAllergy = TypesOfAllergies(name=allergy)
             db.session.add(newAllergy)
             db.session.commit()
-        current_allergy_obj = TypesOfAllergies.query.filter_by(name=allergy)
-        current_allergy_obj.AllergicKids.append(kid)
+        current_allergy_obj = TypesOfAllergies.query.filter_by(name=allergy).first()
+        kid.allergies.append(current_allergy_obj)
         db.session.commit()
 
 
 def isAllergyExist(allergy):
-    exists = db.session.query(TypesOfAllergies.id).filter_by(name=allergy)
-    if exists is None:
+    isAllergyExists = TypesOfAllergies.query.filter_by(name=allergy).first()
+    if isAllergyExists is None:
         return False
     return True
 

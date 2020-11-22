@@ -1,18 +1,36 @@
+from flask import jsonify
 from werkzeug.exceptions import abort
-from manageIt.allergies_service import addAllergyToKid
+
+from manageIt import app
+from manageIt.allergies_service import addAllergyToKid, listOfAllergies
+from manageIt.kindergarten_service import getKindergarten
 from manageIt.models import Kid, Kindergarten, TypesOfAllergies, allergicKids, KidsAttendanceTable, ReportsOnTheChildren, db
 from datetime import datetime
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+ENGINE = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
 
 
 def createKid(requestData):
     birthday_as_date = strToDate(requestData['birthDate'])
     kindergarten = Kindergarten.query.filter_by(name=requestData['kindergarten']).first()
+    ID = requestData['ID']
+    if kindergarten is None or isDuplicateID(ID):
+        abort(404)
     kid = Kid(name=requestData['name'], birthDate=birthday_as_date, groupAge=requestData['groupAge'],
-              kindergarten=kindergarten, kids_birth_id=requestData['ID'], gender=requestData['gender'], status=['status'])
+              kindergarten=kindergarten, kids_birth_id=ID, gender=requestData['gender'], status=['status'])
     db.session.add(kid)
     db.session.commit()
     if 'allergies' in requestData:
         addAllergies(requestData['allergies'], kid)
+
+
+def isDuplicateID(idToCheck):
+    checkId = Kid.query.filter_by(kids_birth_id=idToCheck).first()
+    if checkId is None:
+        return False
+    return True
 
 
 def addAllergies(allergies, kid):
@@ -51,12 +69,17 @@ def getKid(requestArguments):
     }
 
 
-def listOfAllergies(kids_id):
-    list_of_allergies = []
-    for allergy in db.session.query(allergicKids).filter(allergicKids.c.kid_id == kids_id).all():
-        allergy_name = TypesOfAllergies.query.filter_by(id=allergy.allergy_id).first().name
-        list_of_allergies.append(allergy_name)
-    return list_of_allergies
+def getAllKids():
+    all_kids = {}
+    Session = sessionmaker(bind=ENGINE)
+    session = Session()
+    for kid, kindergarten in session.query(Kid, Kindergarten).filter(Kid.kindergarten_id == Kindergarten.id).all():
+        all_kids[kid.id] = {
+            'kid_name': kid.name,
+            'kid_group': kid.groupAge,
+            'kinderfarten_name': kindergarten.name
+        }
+    return all_kids
 
 
 def isKidExistInTable(kid_id):
@@ -160,13 +183,13 @@ def updateBirthdate(kid, birthdate):
 def updateGroupAge(kid, groupAge):
     if groupAge is None:
         abort(404)
-    kid.groupAge= groupAge
+    kid.groupAge = groupAge
 
 
 def updateID(kid, ID):
     if ID is None:
         abort(404)
-    kid.ID = ID
+    kid.kids_birth_id = ID
 
 
 def updateGender(kid, gender):

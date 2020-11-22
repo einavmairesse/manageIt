@@ -15,7 +15,7 @@ class Kindergarten(db.Model):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(30), nullable=False)
+    username = db.Column(db.String(30), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(250), nullable=False)
     kindergarten = relationship("Kindergarten", backref='manager', uselist=False)
@@ -40,7 +40,6 @@ class Kid(db.Model):
     name = db.Column(db.String(30), nullable=False)
     birthDate = db.Column(db.Date, nullable=False)
     groupAge = db.Column(db.Integer, nullable=False)
-    ID = db.Column(db.Integer, nullable=False)
     gender = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(50), nullable=False)
     kids_birth_id = db.Column(db.Integer, nullable=False, unique=True)

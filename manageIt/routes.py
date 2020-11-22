@@ -1,10 +1,17 @@
+import json
+
+from flask import request, jsonify
+from flask_cors import CORS, cross_origin
+
 from manageIt import app
-from flask import request, Response, make_response, jsonify
-from manageIt.user_service import createUser, getUser, deleteUser
-from manageIt.kindergarten_service import createKindergarten, getKindergarten, deleteKindergarten
-from manageIt.kid_service import createKid, getKid, deletesKid
-from manageIt.reports_on_children_srevice import getReport, createReport, updateReport, deleteReport
+from manageIt.kid_service import createKid, getKid, deletesKid, updateKid, getAllKids
 from manageIt.kids_attendance_table import createRecord, updateRecord, deleteRecord
+from manageIt.kindergarten_service import createKindergarten, getKindergarten, deleteKindergarten
+from manageIt.reports_on_children_srevice import getReport, createReport, updateReport, deleteReport
+from manageIt.user_service import createUser, getUser, deleteUser
+
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 # Kindergarten
@@ -44,6 +51,11 @@ def get_kid():
     return jsonify(response)
 
 
+@app.route('/kids/All', methods=['GET'])
+def get_all_kids():
+    return getAllKids()
+
+
 @app.route('/kids', methods=['DELETE'])
 def delete_kid():
     deletesKid(request.args)
@@ -52,6 +64,7 @@ def delete_kid():
 
 @app.route('/kids', methods=['PUT'])
 def update_kid():
+    updateKid(request.json)
     return "Updated kid info"
 
 
@@ -95,8 +108,9 @@ def delete_allergy():
 
 
 @app.route('/allergy', methods=['GET'])
+@cross_origin()
 def get_allergy():
-    return "allergy"
+    return json.dumps({"result": "success", "id": 52, "name": "maor", 'allergies' : [{'id': 1, 'name': 'Einav'}, {'id': 2, 'name': 'woman'}, {'id':3, 'name':'pussy'}]})
 
 
 @app.route('/reportsOnChildren', methods=['GET'])
